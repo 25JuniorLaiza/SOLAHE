@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Para ti</title>
+<style>
+  :root{
+    --fondo:#ce93d8; --panel:#24173b; --texto:#f3eee9;
+    --tenue:#16121b; --acento:#e8a33d;
+    box-sizing:border-box;
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  *{box-sizing:border-box;margin:0}
+  body{
+    min-height:100%;background:var(--fondo);color:var(--texto);
+    font-family:"Avenir Next","Segoe UI",system-ui,sans-serif;
+    display:grid;place-items:center;padding:24px;
+  }
+  .caja{width:100%;max-width:340px;text-align:center}
+
+  /* ---- Pantalla 1: contraseña ---- */
+  #clave h1{font-size:1.4rem;font-weight:600;margin-bottom:6px}
+  #clave p{color:var(--tenue);font-size:.9rem;margin-bottom:22px}
+  input{
+    width:100%;padding:14px 16px;border-radius:10px;border:1px solid #382e48;
+    background:var(--panel);color:var(--texto);font-size:1rem;text-align:center;
+    letter-spacing:.15em;outline:none;
+  }
+  input:focus{border-color:var(--acento)}
+  button{
+    margin-top:12px;width:100%;padding:14px;border:0;border-radius:10px;
+    background:var(--acento);color:#241a08;font-size:1rem;font-weight:600;cursor:pointer;
+  }
+  #error{color:#e2726e;font-size:.85rem;height:18px;margin-top:10px}
+
+  /* ---- Pantalla 2: reproductor ---- */
+  #player{display:none}
+  .portada{
+    width:100%;aspect-ratio:1;border-radius:14px;object-fit:cover;
+    box-shadow:0 24px 50px rgba(0,0,0,.55);
+  }
+  .titulo{margin-top:26px;font-size:1.25rem;font-weight:600}
+  .artista{color:var(--tenue);font-size:.9rem;margin-top:4px}
+  .barra{
+    width:100%;margin-top:22px;height:4px;border-radius:4px;background:#382e48;
+    cursor:pointer;position:relative;
+  }
+  #progreso{height:100%;width:0;border-radius:4px;background:var(--acento)}
+  .tiempos{display:flex;justify-content:space-between;color:var(--tenue);font-size:.72rem;margin-top:7px}
+  #play{
+    margin-top:22px;width:62px;height:62px;border-radius:50%;font-size:1.3rem;
+    display:grid;place-items:center;margin-inline:auto;
+  }
+  @media (prefers-reduced-motion:no-preference){#progreso{transition:width .2s linear}}
+</style>
+</head>
+<body>
+
+<div class="caja">
+
+  <!-- Pantalla 1 -->
+  <div id="clave">
+    <h1>Hay algo esperándote</h1>
+    <p>Escribe la contraseña para entrar</p>
+    <input id="input" type="password" placeholder="••••••" autocomplete="off">
+    <button onclick="entrar()">Entrar</button>
+    <div id="error"></div>
+  </div>
+
+  <!-- Pantalla 2 -->
+  <div id="player">
+    <img class="portada" id="foto" alt="">
+    <div class="titulo" id="titulo"></div>
+    <div class="artista" id="artista"></div>
+    <div class="barra" id="barra"><div id="progreso"></div></div>
+    <div class="tiempos"><span id="actual">0:00</span><span id="total">0:00</span></div>
+    <button id="play" onclick="alternar()">▶</button>
+    <audio id="audio"></audio>
+  </div>
+
+</div>
+
+<script>
+/* ========= CONFIGURACIÓN: cambia solo esto ========= */
+const CONFIG = {
+  password: "1234",
+  foto:    "https://TU-IMAGEN.jpg",   // enlace directo a la foto
+  audio:   "https://TU-CANCION.mp3",  // enlace directo al audio
+  titulo:  "Nuestra canción",
+  artista: "Para alguien especial"
+};
+/* =================================================== */
+
+const audio = document.getElementById("audio");
+
+function entrar(){
+  const val = document.getElementById("input").value;
+  if(val !== CONFIG.password){
+    document.getElementById("error").textContent = "Contraseña incorrecta";
+    return;
+  }
+  document.getElementById("clave").style.display = "none";
+  document.getElementById("player").style.display = "block";
+  document.getElementById("foto").src = CONFIG.foto;
+  document.getElementById("titulo").textContent = CONFIG.titulo;
+  document.getElementById("artista").textContent = CONFIG.artista;
+  audio.src = CONFIG.audio;
+}
+document.getElementById("input").addEventListener("keydown", e => { if(e.key === "Enter") entrar(); });
+
+function alternar(){
+  if(audio.paused){ audio.play(); document.getElementById("play").textContent = "❚❚"; }
+  else { audio.pause(); document.getElementById("play").textContent = "▶"; }
+}
+
+const fmt = s => isNaN(s) ? "0:00" : Math.floor(s/60) + ":" + String(Math.floor(s%60)).padStart(2,"0");
+
+audio.addEventListener("loadedmetadata", () => document.getElementById("total").textContent = fmt(audio.duration));
+audio.addEventListener("timeupdate", () => {
+  document.getElementById("progreso").style.width = (audio.currentTime/audio.duration*100 || 0) + "%";
+  document.getElementById("actual").textContent = fmt(audio.currentTime);
+});
+audio.addEventListener("ended", () => document.getElementById("play").textContent = "▶");
+
+document.getElementById("barra").addEventListener("click", e => {
+  const b = e.currentTarget.getBoundingClientRect();
+  audio.currentTime = (e.clientX - b.left) / b.width * audio.duration;
+});
+</script>
+</body>
+</html>
